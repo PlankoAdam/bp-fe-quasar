@@ -1,10 +1,10 @@
 <template>
   <q-page class="flex flex-col content-center w-full h-full min-h-full">
     <div
-      class="min-w-fit sm:max-w-3xl w-full flex flex-col min-h-full h-full flex-1 items-center"
+      v-if="!uploaded"
+      class="min-w-fit sm:max-w-xl max-w-2xl w-full flex flex-col min-h-full h-full flex-1 justify-evenly px-8"
     >
       <q-uploader
-        v-if="!uploaded"
         class="w-full"
         url="http://localhost:5000/process"
         label="Upload .pdf/.txt file"
@@ -18,38 +18,51 @@
           }
         "
       />
-      <div v-if="uploaded" style="width: inherit; max-width: inherit">
-        <div class="q-pa-md flex flex-col justify-end mb-20">
-          <div class="w-full max-h-full">
-            <q-chat-message
-              v-for="(msg, index) in chatHistory"
-              :key="index"
-              :sent="msg.sent"
-            >
-              <div v-for="(t, index) in msg.text" :key="index">{{ t }}</div>
-              <q-spinner-dots v-if="msg.waiting" />
-            </q-chat-message>
-          </div>
+    </div>
+
+    <div
+      v-if="uploaded"
+      class="sm:max-w-3xl max-w-2xl w-full flex flex-col min-h-full h-full flex-1"
+    >
+      <div class="q-pa-md flex flex-col justify-end mb-20">
+        <div ref="chatDiv" class="w-full max-h-full">
+          <q-chat-message
+            v-for="(msg, index) in chatHistory"
+            :key="index"
+            :sent="msg.sent"
+            .bg-color="
+              () => {
+                if (true) {
+                  console.log('bgcolor');
+                  return 'primary';
+                }
+              }
+            "
+          >
+            <div v-for="(t, index) in msg.text" :key="index">{{ t }}</div>
+            <q-spinner-dots v-if="msg.waiting" />
+          </q-chat-message>
         </div>
-        <div
-          class="flex flex-row p-3 fixed bottom-0 bg-white"
-          style="width: inherit; max-width: inherit"
-        >
-          <q-input
-            class="flex-1 me-3"
-            square
-            outlined
-            v-model="userText"
-            label="Query"
-            @keyup.enter="askQuery(userText)"
-          />
-          <q-btn
-            :loading="loading"
-            color="secondary"
-            @click="askQuery(userText)"
-            label="Ask"
-          />
-        </div>
+      </div>
+      <div
+        class="flex flex-row p-3 fixed bottom-0 bg-white"
+        style="width: inherit; max-width: inherit"
+      >
+        <q-input
+          class="flex-1 me-3"
+          square
+          outlined
+          v-model="userText"
+          label="Query"
+          @keyup.enter="askQuery(userText)"
+          :readonly="loading"
+        />
+        <q-btn
+          :loading="loading"
+          color="secondary"
+          @click="askQuery(userText)"
+          label="Ask"
+        />
       </div>
     </div>
   </q-page>
@@ -66,6 +79,7 @@ let userText = ref("");
 let textChunks = ref([]);
 
 let chatHistory = ref([]);
+let chatDiv = ref(null);
 
 async function askQuery(query) {
   userText.value = "";
@@ -80,6 +94,7 @@ async function askQuery(query) {
     sent: false,
     waiting: true,
   });
+  scroll();
 
   loading.value = true;
 
@@ -96,11 +111,16 @@ async function askQuery(query) {
         sent: false,
         waiting: false,
       });
+      scroll();
       console.log(response.data.answer);
       console.log(response.data.context);
     })
     .finally(() => {
       loading.value = false;
     });
+}
+
+function scroll() {
+  chatDiv.value.scrollTop = chatDiv.value.scrollHeight;
 }
 </script>
