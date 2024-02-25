@@ -81,6 +81,8 @@ let textChunks = ref([]);
 let chatHistory = ref([]);
 let chatDiv = ref(null);
 
+let msgs = [];
+
 async function askQuery(query) {
   userText.value = "";
 
@@ -101,10 +103,13 @@ async function askQuery(query) {
   let payload = {
     query: query,
     chunks: textChunks.value,
+    msgs: msgs,
   };
   axios
     .post("http://localhost:5000/answer", payload)
     .then((response) => {
+      msgs.push(query);
+      msgs.push(response.data.answer);
       chatHistory.value.pop();
       chatHistory.value.push({
         text: [response.data.context, response.data.answer],
